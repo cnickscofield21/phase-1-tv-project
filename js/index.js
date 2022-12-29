@@ -15,7 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
+// Mostly done by API
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -25,14 +25,56 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-function renderShow() {
-
+function renderSearchUI() {
+    // const main = document.getElementById("main-content");
+    console.log('renderSearchUI');
 }
 
-function renderPerson() {
+function renderHomeUI() {
     
+    // Deactivated to permit static dev
+
+    // const main = document.getElementById("main-content");
+    // const topRow = document.createElement("div");
+    // topRow.className = "row";
+    // const h2 = document.createElement("h2");
+    // h2.textContent = "Welcome to Couchtime!";
+
+    // main.innerHTML = "";
+    // topRow.append(h2);
+    // main.append(topRow);
 }
 
+function renderWatchlistUI() {
+    // const main = document.getElementById("main-content");
+    console.log('renderWatchlistUI');
+}
+
+function renderCollectionsUI() {
+    // const main = document.getElementById("main-content");
+    console.log('renderCollectionsUI');
+}
+
+function renederSettingsUI() {
+    // const main = document.getElementById("main-content");
+    console.log('renederSettingsUI');
+}
+
+function getTheme() {
+    return (localStorage.couchTheme) ? localStorage.couchTheme : "automatic";
+}
+
+/**
+ * 
+ * @param {string} theme light|dark|auto 
+ */
+function setTheme(theme) {
+    localStorage.setItem("couchTheme", theme);
+    if (theme === "automatic") {
+        theme = getSystemColorScheme();
+    }
+    document.body.setAttribute("data-bs-theme", theme);
+}
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -45,15 +87,38 @@ function renderPerson() {
 //  EVENT LISTENER ATTACHMENTS
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Listens for hashchange event to trigger UI changes w/o loading a new page 
+ * DOES NOT pass thru the event object--not needed.
+ * @listens hashchange
+ * @callback hashchangeRouter
+ */
 function attachListeners() {
-    window.addEventListener("hashchange", /*TBD*/);
+    window.addEventListener("hashchange", () => hashchangeRouter());
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  EVENT HANDLERS
 ///////////////////////////////////////////////////////////////////////////////
 
-// TBD
-
+/**
+ * Triggers the rendering function for appropriate content based on recently 
+ * changed hash value. Hash may be passed manually without a hashchange event
+ * @param {string} hash Optional. When passed, it acts as the key to internal
+ *                      router object for routing proper rendering function.
+ * NOTE: Hash is the string following the # character near the end of the URL
+ */
+function hashchangeRouter(hash) {
+    hash = (hash) ? hash : getHash();
+    const router = {
+        "Search": renderSearchUI,
+        "Home": renderHomeUI,
+        "Watchlist": renderWatchlistUI,
+        "Collections": renderCollectionsUI,
+        "Settings": renederSettingsUI
+    };
+    
+    router[hash]();
+}
 ///////////////////////////////////////////////////////////////////////////////
 //  URL MANAGEMENT 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,14 +135,25 @@ function setApiUrl(query = "") {
     return `${root}`;
 }
 
-function getHash() {
-    const hash = location.hash;
-
+/**
+ * 
+ */
+function setGoogleCalendarURL() {
+    const root = "https://www.google.com/calendar/render?action=TEMPLATE&text=";
+    
+    // https://www.google.com/calendar/render?action=TEMPLATE&text=SHOW%20NAME&details=SEASON%20AND%20EPISODE.%20PORTION%20OF%20DESCRITPTION&location=SHOW%20URL%20MAYBE&dates=20210112T083000Z%2F20210115T040000Z&ctz=America%2FNew_York
 }
 
-function setHash() {
+function getHash() {
+    return location.hash.slice(1);
+}
 
-    location.hash = "";
+/**
+ * To be called to trigger
+ * @param {string} hash The value to be assigned as the URL hash
+ */
+function setHash(hash = "") {
+    location.hash = hash;
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  API COMMUNICATION
@@ -176,3 +252,25 @@ function deleteJSON(url = "", callback) {
     .then(data => callback(data))
     .catch((error) => console.log('Error: ', error));
 }
+///////////////////////////////////////////////////////////////////////////////
+//  BROWSER CHECKING
+///////////////////////////////////////////////////////////////////////////////
+
+function getSystemColorScheme() {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        return "dark";
+    } else {
+        return "light";
+    }
+}
+///////////////////////////////////////////////////////////////////////////////
+//  INITIALIZATION
+///////////////////////////////////////////////////////////////////////////////
+
+function init() {
+    attachListeners();
+    renderHomeUI();
+    setTheme(getTheme());
+}
+
+init();
