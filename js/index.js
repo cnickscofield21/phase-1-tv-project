@@ -106,6 +106,7 @@ function attachListeners() {
  * @param {string} hash Optional. When passed, it acts as the key to internal
  *                      router object for routing proper rendering function.
  * NOTE: Hash is the string following the # character near the end of the URL
+ * TODO: Remove this todo. It was used for testing.
  */
 function hashchangeRouter(hash) {
     hash = (hash) ? hash : getHash();
