@@ -31,7 +31,7 @@ function renderSearchUI() {
 }
 
 function renderHomeUI() {
-    
+    togglePrimaryVisibility("Home-Section");
     // Deactivated to permit static dev
 
     // const main = document.getElementById("main-content");
@@ -46,24 +46,29 @@ function renderHomeUI() {
 }
 
 function renderWatchlistUI() {
-    // const main = document.getElementById("main-content");
+    togglePrimaryVisibility("Watchlist-Section");
+    
     console.log('renderWatchlistUI');
 }
 
 function renderCollectionsUI() {
-    console.log('renderCollectionsUI');
-
+    togglePrimaryVisibility("Collections-Section");
+    
+    console.log('Called renderCollectionsUI() ');
 }
 
 function renederSettingsUI() {
-    console.log('Build Setting');
+    togglePrimaryVisibility("Settings-Section");
     
+    console.log('Called renederSettingsUI() ');
 }
 
 function togglePrimaryVisibility(sectionId = "Home-Section") {
-    const contentSections = querySelectorAll(".content-section");
+    const contentSections = document.querySelectorAll(".content-section");
+    
+    // Loop all content sections, find section w/o d-none, add it to hide it
     contentSections.forEach(element => {
-        if (element.className === "content-section") {
+        if (element.className === "content-section") { 
             element.classList.toggle("d-none");
         }
     })
