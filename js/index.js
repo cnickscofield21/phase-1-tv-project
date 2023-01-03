@@ -51,22 +51,80 @@ function renderWatchlistUI() {
 }
 
 function renderCollectionsUI() {
-    // const main = document.getElementById("main-content");
     console.log('renderCollectionsUI');
+
 }
 
 function renederSettingsUI() {
-    // const main = document.getElementById("main-content");
-    console.log('renederSettingsUI');
+    console.log('Build Setting');
+    
 }
 
+function togglePrimaryVisibility(sectionId = "Home-Section") {
+    const contentSections = querySelectorAll(".content-section");
+    contentSections.forEach(element => {
+        if (element.className === "content-section") {
+            element.classList.toggle("d-none");
+        }
+    })
+    
+    document.querySelector(`#${sectionId}`).classList.toggle("d-none");
+}
+
+function getMain() {
+    const main = document.getElementById("main-content");
+    main.innerHTML = "";
+    return main;
+}
+
+/**
+ * 
+ * @param {string} classes A space separated list of class names
+ * @example getDivWithClasses()
+ * // returns <div class="row"></div>
+ * @example getDivWithClasses("row gy-2 gx-3 align-items-center")
+ * // returns <div class="row gy-2 gx-3 align-items-center"></div>
+ * @returns {HTMLNode}
+ */
+function getNewDivWithClasses(classes = "") {
+    const docFrag = document.createDocumentFragment();
+    const div = document.createElement("div");
+    div.classList = classes;
+    docFrag.append(div);
+    return docFrag;
+}
+
+/**
+ * @alias getNewDivWithClasses() 
+ * @example getNewRow()
+ * // returns <div class="row"></div>
+ * @example getNewRow("row gy-2 gx-3 align-items-center")
+ * // returns <div class="row gy-2 gx-3 align-items-center"></div>
+ * @returns {HTMLNode}
+ */
+function getNewRow(classes = "row") {return getNewDivWithClasses(classes)}
+
+/**
+ * @alias getDivWithClasses() 
+ * @example getNewCol()
+ * // returns <div class="col"></div>
+ * @example getNewCol("col gy-2 gx-3")
+ * // returns <div class="col gy-2 gx-3"></div>
+ * @returns {HTMLNode}
+ */
+function getNewCol(classes = "col") {return getNewDivWithClasses(classes)}
+
+/**
+ * 
+ * @returns {string} Current value of theme setting from localStorage, or "automatic" as default
+ */
 function getTheme() {
     return (localStorage.couchTheme) ? localStorage.couchTheme : "automatic";
 }
 
 /**
  * 
- * @param {string} theme light|dark|auto 
+ * @param {string} theme light|dark|automatic 
  */
 function setTheme(theme) {
     localStorage.setItem("couchTheme", theme);
@@ -88,13 +146,11 @@ function setTheme(theme) {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Listens for hashchange event to trigger UI changes w/o loading a new page 
- * DOES NOT pass thru the event object--not needed.
- * @listens hashchange
- * @callback hashchangeRouter
+ * Attaches all needed event listeners on page load.
  */
 function attachListeners() {
     window.addEventListener("hashchange", () => hashchangeRouter());
+    document.getElementById("settings-form").addEventListener("submit", (e) => settingsFormHandler(e));
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  EVENT HANDLERS
@@ -119,6 +175,13 @@ function hashchangeRouter(hash) {
     };
     
     router[hash]();
+}
+
+function settingsFormHandler(e) {
+    e.preventDefault();
+    const settings = getSettingsFormValues();
+    setTheme(settings.couchTheme);
+    setLandingPage(settings.landingPage)
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  URL MANAGEMENT 
@@ -156,6 +219,33 @@ function getHash() {
 function setHash(hash = "") {
     location.hash = hash;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//  LOCAL SETTINGS CONTROLS
+///////////////////////////////////////////////////////////////////////////////
+
+function getLandingPage() {
+    return (localStorage.landingPage) ? localStorage.landingPage : "Home";
+}
+
+function setLandingPage(page) {
+    localStorage.setItem("landingPage", page);
+}
+
+function getSettingsFormValues() {
+    const form = document.getElementById("settings-form");
+    const settings = {
+        couchTheme:  form["couch-theme-radio"].value,
+        landingPage: form["landing-page-radio"].value
+    }
+    return settings;
+}
+
+function setSettingsFormValues() {
+    const form = document.getElementById("settings-form");
+    form["couch-theme-radio"].value = getTheme();
+    form["landing-page-radio"].value = getLandingPage();
+}
 ///////////////////////////////////////////////////////////////////////////////
 //  API COMMUNICATION
 ///////////////////////////////////////////////////////////////////////////////
@@ -163,7 +253,7 @@ function setHash(hash = "") {
 /**
  * 
  * @param {string} url The location of data to be retrieved
- * @param {function} callback Function to process JSON after retrieval
+ * @param {function} callback Optional. Function to process JSON after retrieval
  * @returns {object} data The data passed callback function
  * @throws Error response message to console.log
  */
@@ -176,7 +266,13 @@ function getJSON(url = "", callback) {
             throw res;
         }
     })
-    .then(data => callback(data))
+    .then(data => {
+        if (callback) {
+            callback(data);
+        } else {
+            return data;
+        }
+    })
     .catch((error) => console.log('Error: ', error));
 }
 
@@ -254,7 +350,7 @@ function deleteJSON(url = "", callback) {
     .catch((error) => console.log('Error: ', error));
 }
 ///////////////////////////////////////////////////////////////////////////////
-//  BROWSER CHECKING
+//  ENVIRONMENT CHECKING
 ///////////////////////////////////////////////////////////////////////////////
 
 function getSystemColorScheme() {
@@ -270,8 +366,9 @@ function getSystemColorScheme() {
 
 function init() {
     attachListeners();
-    renderHomeUI();
+    setLandingPage(getLandingPage());
     setTheme(getTheme());
+    hashchangeRouter(getLandingPage());
 }
 
 init();
