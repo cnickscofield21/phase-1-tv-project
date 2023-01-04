@@ -324,9 +324,9 @@ function episodeByNumber(showId = 0, seasonNum = 1, episodeNum = 1) {
 /**
  * MAY NOT GET USED BY LAUNCH
  */
-function setGoogleCalendarURL(show = {}) {
+function setGoogleCalendarURL(episode = {}) {
     const root = "https://www.google.com/calendar/render?action=TEMPLATE&text=";
-    
+    return `${root}`;
     // https://www.google.com/calendar/render?action=TEMPLATE&text=SHOW%20NAME&details=SEASON%20AND%20EPISODE.%20PORTION%20OF%20DESCRITPTION&location=SHOW%20URL%20MAYBE&dates=20210112T083000Z%2F20210115T040000Z&ctz=America%2FNew_York
 }
 
@@ -335,7 +335,7 @@ function getHash() {
 }
 
 /**
- * To be called to trigger
+ * 
  * @param {string} hash The value to be assigned as the URL hash
  */
 function setHash(hash = "") {
