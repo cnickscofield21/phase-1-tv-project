@@ -32,22 +32,12 @@ function renderSearchUI() {
 
 function renderHomeUI() {
     togglePrimaryVisibility("Home-Section");
-    // Deactivated to permit static dev
-
-    // const main = document.getElementById("main-content");
-    // const topRow = document.createElement("div");
-    // topRow.className = "row";
-    // const h2 = document.createElement("h2");
-    // h2.textContent = "Welcome to Couchtime!";
-
-    // main.innerHTML = "";
-    // topRow.append(h2);
-    // main.append(topRow);
+    
 }
 
 function renderWatchlistUI() {
     togglePrimaryVisibility("Watchlist-Section");
-    
+
     console.log('renderWatchlistUI');
 }
 
@@ -59,8 +49,105 @@ function renderCollectionsUI() {
 
 function renederSettingsUI() {
     togglePrimaryVisibility("Settings-Section");
+    setSettingsFormValues();
+}
+
+function renderShows(shows = {}) {
+
+}
+
+function renderShow(show = {}) {
+    // Show detail up top
+
+    // "View Episodes" below, nav to episodes view
+}
+
+function renderEpisodes(episodes = {}) {
+    const table = episodeTable();
+    const tbody = episodeTableRows(episodes);
+
+    table.append(tbody);
+
+    return table;
+}
+
+function episodeTable() {
+    const docFrag = document.createDocumentFragment();
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const hRow = document.createElement("tr");
+    const headerText = ["Number", "Date", "Name"];
+    const ths = [];
     
-    console.log('Called renederSettingsUI() ');
+    table.className = "table table-striped table-hover";
+
+    headerText.forEach(header => {
+        let th = document.createElement("th");
+        th.textContent = header;
+        th.scope = "col";
+        ths.push(th);
+    });
+
+    hRow.append(...ths);
+    thead.append(hRow);
+    table.append(thead);
+    docFrag.append(table);
+
+    return docFrag;
+}
+
+function episodeTableRows(episodes = {}) {
+    console.log('episodes: ', episodes);
+    
+    const docFrag = document.createDocumentFragment();
+    const tbody = document.createElement("tbody");
+    const rows = [];
+
+    episodes.forEach(episode => {
+        let row = document.createElement("tr");
+        let epData = [episode.number, episode.season, episode.name];
+        
+        epData.forEach(field => {
+            let tds = [];
+            let td = document.createElement("td");
+            td.textContent = field;
+        })
+        
+        row.addEventListener("click", (e) => console.log(e, 'FINISH MY HANDLER!!!'));
+        rows.push(row);
+    })
+
+    tbody.append(...rows);
+    docFrag.append(tbody);
+
+    return docFrag;
+}
+
+function renderEpisode(episode = {}) {
+
+}
+
+/**
+ * 
+ * @returns {HTMLNode} A status spinner for ansychronous status
+ */
+function renderSpinner() {
+    const docFrag = document.createDocumentFragment();
+    const outerDiv = document.createElement("div");
+    const innerDiv = document.createElement("div");
+    const span = document.createElement("span");
+
+    outerDiv.className = "d-flex justify-content-center";
+    innerDiv.className = "spinner-border";
+    innerDiv.role = "status";
+    span.className = "visually-hidden";
+    span.textContent = "Loading...";
+    
+    innerDiv.append(span);
+    outerDiv.append(innerDiv);
+    docFrag.append(outerDiv);
+
+    return docFrag;
 }
 
 function togglePrimaryVisibility(sectionId = "Home-Section") {
@@ -76,6 +163,10 @@ function togglePrimaryVisibility(sectionId = "Home-Section") {
     document.querySelector(`#${sectionId}`).classList.toggle("d-none");
 }
 
+/**
+ * 
+ * NOT IN USE
+ */
 function getMain() {
     const main = document.getElementById("main-content");
     main.innerHTML = "";
@@ -193,21 +284,47 @@ function settingsFormHandler(e) {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * TODO: Finish logic
- * @param {string} query 
- * @returns {string} url
+ * 
+ * @param {string} query String value from search input.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
  */
-function setApiUrl(query = "") {
-    const root = "https://api.tvmaze.com/";
-
-    // MUTATIONS
-    return `${root}`;
+function showSearch(query = "") {
+    return `https://api.tvmaze.com/search/shows?q=${encodeURI(query)}`;
 }
 
 /**
  * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
  */
-function setGoogleCalendarURL() {
+function showLookup(showId = 0) {
+    return `https://api.tvmaze.com/shows/${showId}`;
+}
+
+/**
+ * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function episodeList(showId = 0) {
+    return `https://api.tvmaze.com/shows/${showId}/episodes`;
+}
+
+/**
+ * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @param {number} seasonNum Number value of show's season
+ * @param {number} episodeNum Number value of show's episode
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function episodeByNumber(showId = 0, seasonNum = 1, episodeNum = 1) {
+    return `https://api.tvmaze.com/shows/${showId}/episodebynumber?season=${seasonNum}&number=${episodeNum}`;
+}
+
+/**
+ * MAY NOT GET USED BY LAUNCH
+ */
+function setGoogleCalendarURL(show = {}) {
     const root = "https://www.google.com/calendar/render?action=TEMPLATE&text=";
     
     // https://www.google.com/calendar/render?action=TEMPLATE&text=SHOW%20NAME&details=SEASON%20AND%20EPISODE.%20PORTION%20OF%20DESCRITPTION&location=SHOW%20URL%20MAYBE&dates=20210112T083000Z%2F20210115T040000Z&ctz=America%2FNew_York
