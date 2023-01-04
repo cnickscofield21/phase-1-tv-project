@@ -16,6 +16,27 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // Mostly done by API
+/*
+db.json {
+    "Watchlist": {
+        showObj1: {showData},
+        showObj2: {showData},
+        showObjn: {showData}
+    },
+    "Collections": {
+        "Collection1": {
+            showObj1: {showData},
+            showObj2: {showData},
+            showObjn: {showData}
+        },
+        "Collection2": {
+            showObj1: {showData},
+            showObj2: {showData},
+            showObjn: {showData}
+        }
+    }
+}
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,42 +52,206 @@ function renderSearchUI() {
 }
 
 function renderHomeUI() {
-    
-    // Deactivated to permit static dev
-
-    // const main = document.getElementById("main-content");
-    // const topRow = document.createElement("div");
-    // topRow.className = "row";
-    // const h2 = document.createElement("h2");
-    // h2.textContent = "Welcome to Couchtime!";
-
-    // main.innerHTML = "";
-    // topRow.append(h2);
-    // main.append(topRow);
+    togglePrimaryVisibility("Home-Section");
+    // Call in the "playing soon" stuff.
 }
 
 function renderWatchlistUI() {
-    // const main = document.getElementById("main-content");
+    togglePrimaryVisibility("Watchlist-Section");
+
     console.log('renderWatchlistUI');
 }
 
 function renderCollectionsUI() {
-    // const main = document.getElementById("main-content");
-    console.log('renderCollectionsUI');
+    togglePrimaryVisibility("Collections-Section");
+    
+    console.log('Called renderCollectionsUI() ');
 }
 
 function renederSettingsUI() {
-    // const main = document.getElementById("main-content");
-    console.log('renederSettingsUI');
+    togglePrimaryVisibility("Settings-Section");
+    setSettingsFormValues();
 }
 
+function renderShows(shows = {}) {
+
+}
+
+function renderShow(show = {}) {
+    // Show detail up top
+
+    // "View Episodes" below, nav to episodes view
+}
+
+
+function renderEpisodes(episodes = {}) {
+    const table = episodeTable();
+    const tbody = episodeTableBody(episodes);
+
+    table.append(tbody);
+
+    return table;
+}
+
+/**
+ * 
+ * @returns {HTMLNode} Table with headers for episode list
+ */
+function episodeTable() {
+    const docFrag = document.createDocumentFragment();
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const hRow = document.createElement("tr");
+    const headerText = ["Number", "Date", "Name"];
+    const ths = [];
+    
+    table.className = "table table-striped table-hover";
+
+    headerText.forEach(header => {
+        let th = document.createElement("th");
+        th.textContent = header;
+        th.scope = "col";
+        ths.push(th);
+    });
+
+    hRow.append(...ths);
+    thead.append(hRow);
+    table.append(thead);
+    docFrag.append(table);
+
+    return docFrag;
+}
+
+/**
+ * 
+ * @param {object} episodes List of episodes to be displayed in table
+ * @returns {HTMLNode} <tbody> with completed rows
+ */
+function episodeTableBody(episodes = {}) {
+    console.log('episodes: ', episodes);
+    
+    const docFrag = document.createDocumentFragment();
+    const tbody = document.createElement("tbody");
+    const rows = [];
+
+    episodes.forEach(episode => {
+        let row = document.createElement("tr");
+        let epData = [episode.number, episode.season, episode.name];
+        
+        epData.forEach(field => {
+            let tds = [];
+            let td = document.createElement("td");
+            td.textContent = field;
+        })
+        
+        row.addEventListener("click", (e) => console.log(e, 'FINISH MY HANDLER!!!'));
+        rows.push(row);
+    })
+
+    tbody.append(...rows);
+    docFrag.append(tbody);
+
+    return docFrag;
+}
+
+function renderEpisode(episode = {}) {
+
+}
+
+/**
+ * 
+ * @returns {HTMLNode} A status spinner for ansychronous status
+ */
+function renderSpinner() {
+    const docFrag = document.createDocumentFragment();
+    const outerDiv = document.createElement("div");
+    const innerDiv = document.createElement("div");
+    const span = document.createElement("span");
+
+    outerDiv.className = "d-flex justify-content-center";
+    innerDiv.className = "spinner-border";
+    innerDiv.role = "status";
+    span.className = "visually-hidden";
+    span.textContent = "Loading...";
+    
+    innerDiv.append(span);
+    outerDiv.append(innerDiv);
+    docFrag.append(outerDiv);
+
+    return docFrag;
+}
+
+function togglePrimaryVisibility(sectionId = "Home-Section") {
+    const contentSections = document.querySelectorAll(".content-section");
+    
+    // Loop all content sections, find section w/o d-none, add it to hide it
+    contentSections.forEach(element => {
+        if (element.className === "content-section") { 
+            element.classList.toggle("d-none");
+        }
+    })
+    
+    document.querySelector(`#${sectionId}`).classList.toggle("d-none");
+}
+
+/**
+ * 
+ * NOT IN USE
+ */
+function getMain() {
+    const main = document.getElementById("main-content");
+    main.innerHTML = "";
+    return main;
+}
+
+/**
+ * 
+ * @param {string} classes A space separated list of class names
+ * @example getDivWithClasses()
+ * // returns <div class="row"></div>
+ * @example getDivWithClasses("row gy-2 gx-3 align-items-center")
+ * // returns <div class="row gy-2 gx-3 align-items-center"></div>
+ * @returns {HTMLNode}
+ */
+function getNewDivWithClasses(classes = "") {
+    const docFrag = document.createDocumentFragment();
+    const div = document.createElement("div");
+    div.classList = classes;
+    docFrag.append(div);
+    return docFrag;
+}
+
+/**
+ * @alias getNewDivWithClasses() 
+ * @example getNewRow()
+ * // returns <div class="row"></div>
+ * @example getNewRow("row gy-2 gx-3 align-items-center")
+ * // returns <div class="row gy-2 gx-3 align-items-center"></div>
+ * @returns {HTMLNode}
+ */
+function getNewRow(classes = "row") {return getNewDivWithClasses(classes)}
+
+/**
+ * @alias getDivWithClasses() 
+ * @example getNewCol()
+ * // returns <div class="col"></div>
+ * @example getNewCol("col gy-2 gx-3")
+ * // returns <div class="col gy-2 gx-3"></div>
+ * @returns {HTMLNode}
+ */
+function getNewCol(classes = "col") {return getNewDivWithClasses(classes)}
+
+/**
+ * 
+ * @returns {string} Current value of theme setting from localStorage, or "automatic" as default
+ */
 function getTheme() {
     return (localStorage.couchTheme) ? localStorage.couchTheme : "automatic";
 }
 
 /**
  * 
- * @param {string} theme light|dark|auto 
+ * @param {string} theme light|dark|automatic 
  */
 function setTheme(theme) {
     localStorage.setItem("couchTheme", theme);
@@ -88,13 +273,11 @@ function setTheme(theme) {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Listens for hashchange event to trigger UI changes w/o loading a new page 
- * DOES NOT pass thru the event object--not needed.
- * @listens hashchange
- * @callback hashchangeRouter
+ * Attaches all needed event listeners on page load.
  */
 function attachListeners() {
     window.addEventListener("hashchange", () => hashchangeRouter());
+    document.getElementById("settings-form").addEventListener("submit", (e) => settingsFormHandler(e));
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  EVENT HANDLERS
@@ -120,28 +303,61 @@ function hashchangeRouter(hash) {
     
     router[hash]();
 }
+
+function settingsFormHandler(e) {
+    e.preventDefault();
+    const settings = getSettingsFormValues();
+    setTheme(settings.couchTheme);
+    setLandingPage(settings.landingPage)
+}
 ///////////////////////////////////////////////////////////////////////////////
 //  URL MANAGEMENT 
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * TODO: Finish logic
- * @param {string} query 
- * @returns {string} url
+ * 
+ * @param {string} query String value from search input.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
  */
-function setApiUrl(query = "") {
-    const root = "https://api.tvmaze.com/";
-
-    // MUTATIONS
-    return `${root}`;
+function showSearch(query = "") {
+    return `https://api.tvmaze.com/search/shows?q=${encodeURI(query)}`;
 }
 
 /**
  * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
  */
-function setGoogleCalendarURL() {
+function showLookup(showId = 0) {
+    return `https://api.tvmaze.com/shows/${showId}`;
+}
+
+/**
+ * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function episodeList(showId = 0) {
+    return `https://api.tvmaze.com/shows/${showId}/episodes`;
+}
+
+/**
+ * 
+ * @param {number} showId Number value contained in a show's id field.
+ * @param {number} seasonNum Number value of show's season
+ * @param {number} episodeNum Number value of show's episode
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function episodeByNumber(showId = 0, seasonNum = 1, episodeNum = 1) {
+    return `https://api.tvmaze.com/shows/${showId}/episodebynumber?season=${seasonNum}&number=${episodeNum}`;
+}
+
+/**
+ * MAY NOT GET USED BY LAUNCH
+ */
+function setGoogleCalendarURL(episode = {}) {
     const root = "https://www.google.com/calendar/render?action=TEMPLATE&text=";
-    
+    return `${root}`;
     // https://www.google.com/calendar/render?action=TEMPLATE&text=SHOW%20NAME&details=SEASON%20AND%20EPISODE.%20PORTION%20OF%20DESCRITPTION&location=SHOW%20URL%20MAYBE&dates=20210112T083000Z%2F20210115T040000Z&ctz=America%2FNew_York
 }
 
@@ -150,11 +366,46 @@ function getHash() {
 }
 
 /**
- * To be called to trigger
+ * 
  * @param {string} hash The value to be assigned as the URL hash
  */
 function setHash(hash = "") {
     location.hash = hash;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  LOCAL SETTINGS CONTROLS
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * 
+ * @returns {string} Value of preferred landing page from localStorage
+ */
+function getLandingPage() {
+    return (localStorage.landingPage) ? localStorage.landingPage : "Home";
+}
+
+/**
+ * 
+ * @param {string} page Value of preferred landing page to be stored in localStorage
+ */
+function setLandingPage(page) {
+    localStorage.setItem("landingPage", page);
+}
+
+function getSettingsFormValues() {
+    const form = document.getElementById("settings-form");
+    const settings = {
+        couchTheme:  form["couch-theme-radio"].value,
+        landingPage: form["landing-page-radio"].value
+    }
+    return settings;
+}
+
+function setSettingsFormValues() {
+    const form = document.getElementById("settings-form");
+    form["couch-theme-radio"].value = getTheme();
+    form["landing-page-radio"].value = getLandingPage();
 }
 ///////////////////////////////////////////////////////////////////////////////
 //  API COMMUNICATION
@@ -163,7 +414,7 @@ function setHash(hash = "") {
 /**
  * 
  * @param {string} url The location of data to be retrieved
- * @param {function} callback Function to process JSON after retrieval
+ * @param {function} callback Optional. Function to process JSON after retrieval
  * @returns {object} data The data passed callback function
  * @throws Error response message to console.log
  */
@@ -176,7 +427,13 @@ function getJSON(url = "", callback) {
             throw res;
         }
     })
-    .then(data => callback(data))
+    .then(data => {
+        if (callback) {
+            callback(data);
+        } else {
+            return data;
+        }
+    })
     .catch((error) => console.log('Error: ', error));
 }
 
@@ -254,9 +511,13 @@ function deleteJSON(url = "", callback) {
     .catch((error) => console.log('Error: ', error));
 }
 ///////////////////////////////////////////////////////////////////////////////
-//  BROWSER CHECKING
+//  ENVIRONMENT CHECKING
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * 
+ * @returns {string} Value of system color scheme, light|dark
+ */
 function getSystemColorScheme() {
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         return "dark";
@@ -270,8 +531,9 @@ function getSystemColorScheme() {
 
 function init() {
     attachListeners();
-    renderHomeUI();
+    setLandingPage(getLandingPage());
     setTheme(getTheme());
+    setHash(getLandingPage());
 }
 
 init();
