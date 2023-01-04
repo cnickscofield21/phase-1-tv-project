@@ -16,6 +16,27 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // Mostly done by API
+/*
+db.json {
+    "Watchlist": {
+        showObj1: {showData},
+        showObj2: {showData},
+        showObjn: {showData}
+    },
+    "Collections": {
+        "Collection1": {
+            showObj1: {showData},
+            showObj2: {showData},
+            showObjn: {showData}
+        },
+        "Collection2": {
+            showObj1: {showData},
+            showObj2: {showData},
+            showObjn: {showData}
+        }
+    }
+}
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,7 +53,7 @@ function renderSearchUI() {
 
 function renderHomeUI() {
     togglePrimaryVisibility("Home-Section");
-    
+    // Call in the "playing soon" stuff.
 }
 
 function renderWatchlistUI() {
@@ -62,15 +83,20 @@ function renderShow(show = {}) {
     // "View Episodes" below, nav to episodes view
 }
 
+
 function renderEpisodes(episodes = {}) {
     const table = episodeTable();
-    const tbody = episodeTableRows(episodes);
+    const tbody = episodeTableBody(episodes);
 
     table.append(tbody);
 
     return table;
 }
 
+/**
+ * 
+ * @returns {HTMLNode} Table with headers for episode list
+ */
 function episodeTable() {
     const docFrag = document.createDocumentFragment();
     const table = document.createElement("table");
@@ -96,7 +122,12 @@ function episodeTable() {
     return docFrag;
 }
 
-function episodeTableRows(episodes = {}) {
+/**
+ * 
+ * @param {object} episodes List of episodes to be displayed in table
+ * @returns {HTMLNode} <tbody> with completed rows
+ */
+function episodeTableBody(episodes = {}) {
     console.log('episodes: ', episodes);
     
     const docFrag = document.createDocumentFragment();
@@ -346,10 +377,18 @@ function setHash(hash = "") {
 //  LOCAL SETTINGS CONTROLS
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * 
+ * @returns {string} Value of preferred landing page from localStorage
+ */
 function getLandingPage() {
     return (localStorage.landingPage) ? localStorage.landingPage : "Home";
 }
 
+/**
+ * 
+ * @param {string} page Value of preferred landing page to be stored in localStorage
+ */
 function setLandingPage(page) {
     localStorage.setItem("landingPage", page);
 }
@@ -475,6 +514,10 @@ function deleteJSON(url = "", callback) {
 //  ENVIRONMENT CHECKING
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * 
+ * @returns {string} Value of system color scheme, light|dark
+ */
 function getSystemColorScheme() {
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         return "dark";
@@ -490,7 +533,7 @@ function init() {
     attachListeners();
     setLandingPage(getLandingPage());
     setTheme(getTheme());
-    hashchangeRouter(getLandingPage());
+    setHash(getLandingPage());
 }
 
 init();
