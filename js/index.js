@@ -47,13 +47,15 @@ db.json {
 ///////////////////////////////////////////////////////////////////////////////
 
 function renderSearchUI() {
-    // const main = document.getElementById("main-content");
-    console.log('renderSearchUI');
+    togglePrimaryVisibility("Search-Section");
+    document.getElementById("search-form-input").focus();
 }
 
 function renderHomeUI() {
     togglePrimaryVisibility("Home-Section");
-    // Call in the "playing soon" stuff.
+    const targetId = "home-results";
+    document.getElementById(targetId).append(renderSpinner(`${targetId}-spinner`));
+    getJSON(showingSoon(), renderEpisodeCards, targetId);
 }
 
 function renderWatchlistUI() {
@@ -65,7 +67,6 @@ function renderWatchlistUI() {
 function renderCollectionsUI() {
     togglePrimaryVisibility("Collections-Section");
     
-    console.log('Called renderCollectionsUI() ');
 }
 
 function renederSettingsUI() {
@@ -73,8 +74,84 @@ function renederSettingsUI() {
     setSettingsFormValues();
 }
 
-function renderShows(shows = {}) {
+/**
+ * 
+ * @param {object} shows Object array of shows
+ * @param {string} targetSelector Targeted element to receive show cards
+ */
+function renderShowCards(shows = {}, targetId = "") {
+    const resultsDiv = document.getElementById(targetId);
+    const results = [];
 
+    if (resultsDiv.childElementCount > 1) {
+        resultsDiv.append(renderSpinner(`${targetId}-spinner`));
+    }
+
+    shows.forEach(item => {
+        let score = (item.score) ? item.score : "N/A";
+        let show = item.show;
+
+        let col = document.createElement("div");
+        let card = document.createElement("div");
+        let img = document.createElement("img");
+        let cardBody = document.createElement("div");
+        let h5 = document.createElement("h5");
+        let h6 = document.createElement("h6");
+        let btnDiv = document.createElement("div");
+        let btnMore = document.createElement("button");
+        let btnList = document.createElement("button");
+        let iEye = document.createElement("i");
+        let iMark = document.createElement("i");
+
+        // Set classes
+        col.className = "col";
+        card.className = "card h-100"; // FIXME: DO WE CARE? Adding h-100 creates uniform card height, but makes buttons float above the bottom on shorter cards
+        img.className = "card-img-top";
+        cardBody.className = "card-body";
+        h5.className = "card-title";
+        h6.className = "card-subtitle mb-2 text-muted";
+        btnDiv.className = "clearfix pt-2";
+        btnMore.className = "btn btn-sm btn-secondary float-start";
+        btnList.className = "btn btn-sm btn-warning float-end";
+        iEye.className = "bi-eye";
+        iMark.className = "bi-bookmark-plus";
+
+        // Set other attributes
+        card.style.width = "15rem";
+        img.src = (show.image) ? show.image.medium : "./assets/not_found.jpg";
+        img.alt = `${show.name} Poster`;
+        btnMore.type = "button";
+        btnList.type = "button";
+
+        // Set text content
+        h5.textContent = show.name;
+        h6.textContent =  (show.webChannel) ? show.webChannel.name : "Multiple Providers";
+        btnMore.textContent = " More...";
+        btnList.textContent = " Watchlist";
+
+        // Attach event listeners
+        card.addEventListener("click", (e) => console.log);
+        btnMore.addEventListener("click", (e) => console.log);
+        btnList.addEventListener("click", (e) => console.log);
+
+        // Prepend/Append most-nested to least-nested elements
+        btnMore.prepend(iEye);
+        btnList.prepend(iMark);
+        btnDiv.append(btnMore, btnList);
+        cardBody.append(h5, h6, btnDiv);
+        card.append(img, cardBody);
+        col.append(card);
+
+        results.push(col);
+    })
+
+    document.getElementById(`${targetId}-spinner`).remove();
+
+    if (results[0]) {
+        resultsDiv.append(...results);
+    } else {
+        resultsDiv.append(getNoResultsMessage());
+    }
 }
 
 function renderShow(show = {}) {
@@ -83,8 +160,89 @@ function renderShow(show = {}) {
     // "View Episodes" below, nav to episodes view
 }
 
+/**
+ * 
+ * @param {object} episodes Object array of shows
+ * @param {string} targetId id of target element to be filled with responses
+ * @param {string} targetSelector Targeted element to receive show cards
+ */
+function renderEpisodeCards(episodes = {}, targetId = "") {
+    const resultsDiv = document.getElementById(targetId);
+    const results = [];
 
-function renderEpisodes(episodes = {}) {
+    episodes.forEach(episode => {
+        let show = episode._embedded.show;
+        let season = (episode.season) ? `S:${episode.season} ` : "";
+        let number = (episode.number) ? `E:${episode.number}` : "";
+        
+        let col = document.createElement("div");
+        let card = document.createElement("div");
+        let img = document.createElement("img");
+        let cardBody = document.createElement("div");
+        let h5 = document.createElement("h5");
+        let h6a = document.createElement("h6");
+        let h6b = document.createElement("h6");
+        let btnDiv = document.createElement("div");
+        let btnMore = document.createElement("button");
+        let btnList = document.createElement("button");
+        let iEye = document.createElement("i");
+        let iMark = document.createElement("i");
+
+        // Set classes
+        col.className = "col";
+        card.className = "card";
+        img.className = "card-img-top";
+        cardBody.className = "card-body";
+        h5.className = "card-title";
+        h6a.className = "card-subtitle mb-2 text-muted";
+        h6b.className = "card-subtitle mb-2 text-muted text-small";
+        btnDiv.className = "clearfix pt-2";
+        btnMore.className = "btn btn-sm btn-secondary float-start";
+        btnList.className = "btn btn-sm btn-warning float-end";
+        iEye.className = "bi-eye";
+        iMark.className = "bi-bookmark-plus";
+
+        // Set other attributes
+        card.style.width = "15rem";
+        img.src = show.image.medium;
+        img.alt = `${show.name} Poster`;
+        btnMore.type = "button";
+        btnList.type = "button";
+
+        // Set text content
+        h5.textContent = show.name;
+        h6a.textContent = `${episode.name} (${season}${number})`;
+        h6b.textContent = show.webChannel.name;
+        btnMore.textContent = " More...";
+        btnList.textContent = " Watchlist";
+
+        // Attach event listeners
+        card.addEventListener("click", (e) => console.log);
+        btnMore.addEventListener("click", (e) => console.log);
+        btnList.addEventListener("click", (e) => console.log);
+
+        // Prepend/Append most-nested to least-nested elements
+        btnMore.prepend(iEye);
+        btnList.prepend(iMark);
+        btnDiv.append(btnMore, btnList);
+        cardBody.append(h5, h6a, h6b, btnDiv);
+        card.append(img, cardBody);
+        col.append(card);
+
+        results.push(col);
+    })
+
+    document.getElementById(`${targetId}-spinner`).remove();
+
+    if (results[0]) {
+        resultsDiv.append(...results);
+    } else {
+        resultsDiv.append(getNoResultsMessage());
+    }
+}
+
+
+function renderEpisodesTable(episodes = {}) {
     const table = episodeTable();
     const tbody = episodeTableBody(episodes);
 
@@ -162,12 +320,13 @@ function renderEpisode(episode = {}) {
  * 
  * @returns {HTMLNode} A status spinner for ansychronous status
  */
-function renderSpinner() {
+function renderSpinner(spinnerId = "") {
     const docFrag = document.createDocumentFragment();
     const outerDiv = document.createElement("div");
     const innerDiv = document.createElement("div");
     const span = document.createElement("span");
 
+    outerDiv.id = spinnerId;
     outerDiv.className = "d-flex justify-content-center";
     innerDiv.className = "spinner-border";
     innerDiv.role = "status";
@@ -241,6 +400,18 @@ function getNewRow(classes = "row") {return getNewDivWithClasses(classes)}
  */
 function getNewCol(classes = "col") {return getNewDivWithClasses(classes)}
 
+function getNoResultsMessage() {
+    const docFrag = document.createDocumentFragment();
+    const h3 = document.createElement("h3");
+    const i = document.createElement("i");
+    h3.textContent = "No results found. ";
+    h3.className = "py-5 text-center";
+    i.className = "bi-emoji-dizzy";
+    h3.append(i);
+    docFrag.append(h3);
+    return docFrag;
+}
+
 /**
  * 
  * @returns {string} Current value of theme setting from localStorage, or "automatic" as default
@@ -269,17 +440,6 @@ function setTheme(theme) {
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-//  EVENT LISTENER ATTACHMENTS
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Attaches all needed event listeners on page load.
- */
-function attachListeners() {
-    window.addEventListener("hashchange", () => hashchangeRouter());
-    document.getElementById("settings-form").addEventListener("submit", (e) => settingsFormHandler(e));
-}
-///////////////////////////////////////////////////////////////////////////////
 //  EVENT HANDLERS
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -304,12 +464,55 @@ function hashchangeRouter(hash) {
     router[hash]();
 }
 
-function settingsFormHandler(e) {
+function settingsFormSubmitHandler(e) {
     e.preventDefault();
     const settings = getSettingsFormValues();
     setTheme(settings.couchTheme);
-    setLandingPage(settings.landingPage)
+    setLandingPage(settings.landingPage);
+    const saveBtn = document.getElementById("save-settings-button");
+    const check = document.createElement("i");
+    check.className = "bi-check-lg";
+
+    saveBtn.className = "btn btn-success";
+    saveBtn.textContent = "Saved ";
+    saveBtn.append(check);
 }
+
+function settingsFormChangeHandler() {
+    const saveBtn = document.getElementById("save-settings-button");
+    
+    saveBtn.className = "btn btn-primary";
+    saveBtn.textContent = "Save";
+}
+
+function searchFormHandler(e) {
+    e.preventDefault();
+    const targetId = "search-results";
+    const query = document.getElementById("search-form-input").value;
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement.hasChildNodes) {
+        targetElement.innerHTML = "";
+    }
+
+    targetElement.append(renderSpinner(`${targetId}-spinner`));
+    getJSON(showSearch(query), renderShowCards, targetId);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  EVENT LISTENER ATTACHMENTS
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Attaches all needed event listeners on page load.
+ */
+function attachListeners() {
+    window.addEventListener("hashchange", () => hashchangeRouter());
+    document.getElementById("settings-form").addEventListener("submit", (e) => settingsFormSubmitHandler(e));
+    document.getElementById("settings-form").addEventListener("change", () => settingsFormChangeHandler());
+    document.getElementById("search-form").addEventListener("submit", (e) => searchFormHandler(e));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //  URL MANAGEMENT 
 ///////////////////////////////////////////////////////////////////////////////
@@ -322,6 +525,15 @@ function settingsFormHandler(e) {
 function showSearch(query = "") {
     return `https://api.tvmaze.com/search/shows?q=${encodeURI(query)}`;
 }
+
+/**
+ * 
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function showingSoon() {
+    return "https://api.tvmaze.com/schedule/web?country=US";
+}
+
 
 /**
  * 
@@ -429,7 +641,7 @@ function getJSON(url = "", callback) {
     })
     .then(data => {
         if (callback) {
-            callback(data);
+            callback(data, arguments[2]);
         } else {
             return data;
         }
@@ -530,10 +742,12 @@ function getSystemColorScheme() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function init() {
+    const hash = getLandingPage();
     attachListeners();
-    setLandingPage(getLandingPage());
+    setLandingPage(hash);
+    hashchangeRouter(hash);
+    setHash(hash)
     setTheme(getTheme());
-    setHash(getLandingPage());
 }
 
 init();

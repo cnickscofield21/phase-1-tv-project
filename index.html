@@ -47,7 +47,7 @@
                         <hr>
                         <div class="pb-4">
                             <!-- FIXME: 'Settings' creeps up sidebar on small screens, should anchor to the bottom -->
-                            <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start position-sticky bottom-10" id="settings-menu">
+                            <ul class="nav nav-pills flex-column align-items-center align-items-sm-start position-sticky" id="settings-menu">
                                 <li class="nav-item">
                                     <a href="#Settings" class="nav-link align-middle px-0 text-white">
                                         <i class="fs-4 bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
@@ -65,14 +65,27 @@
                             </div>
                         </div>
                         <hr>
+                        <form class="form" id="search-form">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="input-group mb-3">
+                                        <input id="search-form-input" type="search" class="form-control" placeholder="Enter Show Title" aria-label="Enter Show Title" aria-describedby="basic-addon1">
+                                        <button class="btn btn-outline-secondary" type="submit" id="search-form-button"><i class="fs-4 bi-search"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="search-results" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"></div>
                     </section>
                     <section id="Home-Section" class="content-section d-none">
                         <div class="row">
                             <div class="col">
                                 <h2>Home</h2>
+                                <h6>Upcoming Programming</h6>
                             </div>
                         </div>
                         <hr>
+                        <div id="home-results" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"></div>
                     </section>
                     <section id="Watchlist-Section" class="content-section d-none">
                         <div class="row">
@@ -81,7 +94,9 @@
                             </div>
                         </div>
                         <hr>
+                        <div id="watchlist-results" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"></div>
                     </section>
+                    <!-- NEEDED!? -->
                     <section id="Showlist-Section" class="content-section d-none">
                         <div class="row">
                             <div class="col">
@@ -113,97 +128,23 @@
                             </div>
                         </div>
                         <hr>
+                        <div id="collections-results" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3"></div>
+                        
                         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
                             <div class="col-md-3">
-                                <!-- TODO: Set max-width per card, image is driving it VERY wide. -->
-                                <div class="card shadow-sm">
-                                    <!-- TODO: Replace with <img src=collection.show[0].image.medium > -->
-                                    <img src="https://static.tvmaze.com/uploads/images/medium_portrait/0/2400.jpg" class="image-fluid card-img-top" alt="...">
+                                <div class="card" style="width: 18rem;">
+                                    <img class="card-img-top" src="https://static.tvmaze.com/uploads/images/medium_portrait/0/2400.jpg" alt="Show Title Poster">
                                     <div class="card-body">
-                                        <div class="card-header">
-                                            <h5>Sci-Fi</h5>
-                                        </div>
-                                        <ul class="list-group list-group-flush">
-                                            <li class="list-group-item">Star Trek: The Next Generation</li><!-- TODO: Prevent wrap, show ellipse instead -->
-                                            <li class="list-group-item">Battlestar Galactica</li>
-                                            <li class="list-group-item">The Orville</li>
-                                            <li class="list-group-item">View All</li>
-                                        </ul>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="btn-group">
-                                                <button type="button" class="btn btn-sm btn-secondary"><i class="bi-eye"> </i></button>
-                                                <button type="button" class="btn btn-sm btn-danger"><i class="bi-journal-x"> </i></button>
-                                            </div>
-                                        <small class="text-muted">collection.length</small>
+                                        <h5 class="card-title">Breaking Bad</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">AMC (network.name)</h6>
+                                        <div class="clearfix pt-2">
+                                            <button type="button" class="btn btn-sm btn-secondary float-start"><i class="bi-eye"></i> More...</button>
+                                            <button type="button" class="btn btn-sm btn-warning float-end"><i class="bi-bookmark-plus"></i> Watchlist</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="col">
-                              <div class="card shadow-sm">
-                                <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"></rect><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-                                <div class="card-body">
-                                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                                  <div class="d-flex justify-content-between align-items-center">
-                                    <div class="btn-group">
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                                    </div>
-                                    <small class="text-muted">9 mins</small>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div class="col">
-                              <div class="card shadow-sm">
-                                <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"></rect><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-                                <div class="card-body">
-                                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                                  <div class="d-flex justify-content-between align-items-center">
-                                    <div class="btn-group">
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                                    </div>
-                                    <small class="text-muted">9 mins</small>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                    
-                            <div class="col">
-                              <div class="card shadow-sm">
-                                <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"></rect><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-                                <div class="card-body">
-                                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                                  <div class="d-flex justify-content-between align-items-center">
-                                    <div class="btn-group">
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                                    </div>
-                                    <small class="text-muted">9 mins</small>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div class="col">
-                              <div class="card shadow-sm">
-                                <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"></rect><text x="50%" y="50%" fill="#eceeef" dy=".3em">Thumbnail</text></svg>
-                                <div class="card-body">
-                                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                                  <div class="d-flex justify-content-between align-items-center">
-                                    <div class="btn-group">
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                                    </div>
-                                    <small class="text-muted">9 mins</small>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                        </div>
                     </section>
                     <section id="Settings-Section" class="content-section d-none">
                         <div class="row">
@@ -251,7 +192,7 @@
                             </div>
                             <div class="row pt-4">
                                 <div class="col-sm-3">
-                                    <button type="submit" class="btn btn-primary">Save</button>
+                                    <button id="save-settings-button" type="submit" class="btn btn-primary">Save</button>
                                 </div>
                             </div>
                         </form>
