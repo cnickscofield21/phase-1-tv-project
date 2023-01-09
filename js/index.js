@@ -15,28 +15,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// Mostly done by API
-/*
-db.json {
-    "Watchlist": {
-        showObj1: {showData},
-        showObj2: {showData},
-        showObjn: {showData}
-    },
-    "Collections": {
-        "Collection1": {
-            showObj1: {showData},
-            showObj2: {showData},
-            showObjn: {showData}
-        },
-        "Collection2": {
-            showObj1: {showData},
-            showObj2: {showData},
-            showObjn: {showData}
-        }
-    }
-}
-*/
+let global_watchlist = {};
+let global_showIds = [];
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -60,18 +40,27 @@ function renderHomeUI() {
 
 function renderWatchlistUI() {
     togglePrimaryVisibility("Watchlist-Section");
-
-    console.log('renderWatchlistUI');
+    const targetId = "watchlist-results";
+    document.getElementById(targetId).append(renderSpinner(`${targetId}-spinner`));
+    getJSON("http://localhost:3000/Watchlist", renderShowCards, targetId)
 }
 
-function renderCollectionsUI() {
-    togglePrimaryVisibility("Collections-Section");
-    
-}
+// FIXME: Save for later version
+// function renderCollectionsUI() {
+//     togglePrimaryVisibility("Collections-Section");
+// }
 
-function renederSettingsUI() {
+function renderSettingsUI() {
     togglePrimaryVisibility("Settings-Section");
     setSettingsFormValues();
+}
+
+function renderShowDetailsUI() {
+    togglePrimaryVisibility("Show-Details-Section");
+}
+
+function renderEpisodeDetailsUI() {
+    togglePrimaryVisibility("Episode-Details-Section");
 }
 
 /**
@@ -83,13 +72,14 @@ function renderShowCards(shows = {}, targetId = "") {
     const resultsDiv = document.getElementById(targetId);
     const results = [];
 
-    if (resultsDiv.childElementCount > 1) {
-        resultsDiv.append(renderSpinner(`${targetId}-spinner`));
+    if (resultsDiv.childElementCount > 0) {
+        resultsDiv.innerHTML = "";
+        document.getElementById(targetId).append(renderSpinner(`${targetId}-spinner`));
     }
 
     shows.forEach(item => {
-        let score = (item.score) ? item.score : "N/A";
-        let show = item.show;
+        let show = (item.show) ? item.show : item;
+        let listed = !!(global_showIds.indexOf(show.id) > -1);
 
         let col = document.createElement("div");
         let card = document.createElement("div");
@@ -105,18 +95,19 @@ function renderShowCards(shows = {}, targetId = "") {
 
         // Set classes
         col.className = "col";
-        card.className = "card h-100"; // FIXME: DO WE CARE? Adding h-100 creates uniform card height, but makes buttons float above the bottom on shorter cards
+        card.className = "card h-100";
         img.className = "card-img-top";
         cardBody.className = "card-body";
         h5.className = "card-title";
         h6.className = "card-subtitle mb-2 text-muted";
         btnDiv.className = "clearfix pt-2";
         btnMore.className = "btn btn-sm btn-secondary float-start";
-        btnList.className = "btn btn-sm btn-warning float-end";
+        btnList.className = (listed) ? "btn btn-sm btn-primary float-end" : "btn btn-sm btn-warning float-end";
         iEye.className = "bi-eye";
-        iMark.className = "bi-bookmark-plus";
+        iMark.className = (listed) ? "bi-bookmark" : "bi-bookmark-plus";
 
         // Set other attributes
+        card.id = `show-card-${show.id}`
         card.style.width = "15rem";
         img.src = (show.image) ? show.image.medium : "./assets/not_found.jpg";
         img.alt = `${show.name} Poster`;
@@ -125,14 +116,13 @@ function renderShowCards(shows = {}, targetId = "") {
 
         // Set text content
         h5.textContent = show.name;
-        h6.textContent =  (show.webChannel) ? show.webChannel.name : "Multiple Providers";
+        h6.textContent = (show.webChannel) ? show.webChannel.name : "Multiple Providers";
         btnMore.textContent = " More...";
-        btnList.textContent = " Watchlist";
+        btnList.textContent = (listed) ? " Watching" : " Watchlist";
 
         // Attach event listeners
-        card.addEventListener("click", (e) => console.log);
-        btnMore.addEventListener("click", (e) => console.log);
-        btnList.addEventListener("click", (e) => console.log);
+        card.addEventListener("click", (e) => passToRenderShowDetails(e, show.id));
+        btnList.addEventListener("click", (e) => toggleWatchlistItem(e, JSON.parse(JSON.stringify(show))));
 
         // Prepend/Append most-nested to least-nested elements
         btnMore.prepend(iEye);
@@ -154,10 +144,38 @@ function renderShowCards(shows = {}, targetId = "") {
     }
 }
 
-function renderShow(show = {}) {
-    // Show detail up top
+function renderShowDetails(show = {}) {
+    const targetId = "show-details-table";
+    const img = document.getElementById("show-details-image");
+    let network = "";
 
-    // "View Episodes" below, nav to episodes view
+    img.src = (show.image) ? show.image.medium : "./assets/not_found.jpg";
+    img.alt = `${show.name} Poster`;
+    document.getElementById("show-details-title").textContent = show.name;
+
+    if (show.network) {
+        network = show.network.name;
+    } else if (show.webChannel) {
+        network = show.webChannel.name;
+    } else {
+        network = "Multiple Providers";
+    }
+
+    document.getElementById("show-details-network").textContent = network;
+    
+    // NOTE: Dakota mentioned he considered this a safe & valid use of .innerHTML during lecture
+    document.getElementById("show-details-summary").innerHTML = show.summary;
+    
+    // Attach event listeners
+    document.getElementById("show-details-addwatchlist").addEventListener("click", (e) => toggleWatchlistItem(e, show.id));
+
+    // Clear table from previous episode if needed
+    if (document.getElementById(targetId).childElementCount > 0) {
+        document.getElementById(targetId).innerHTML = "";
+    }
+    
+    // Build episodes table
+    getJSON(episodeList(show.id), renderEpisodesTable, targetId);
 }
 
 /**
@@ -170,10 +188,16 @@ function renderEpisodeCards(episodes = {}, targetId = "") {
     const resultsDiv = document.getElementById(targetId);
     const results = [];
 
+    if (resultsDiv.childElementCount > 0 && document.getElementById(`${targetId}-spinner`)) {
+        resultsDiv.innerHTML = "";
+        document.getElementById(targetId).append(renderSpinner(`${targetId}-spinner`));
+    }
+
     episodes.forEach(episode => {
         let show = episode._embedded.show;
         let season = (episode.season) ? `S:${episode.season} ` : "";
         let number = (episode.number) ? `E:${episode.number}` : "";
+        let listed = !!(global_showIds.indexOf(show.id) > -1);
         
         let col = document.createElement("div");
         let card = document.createElement("div");
@@ -184,13 +208,14 @@ function renderEpisodeCards(episodes = {}, targetId = "") {
         let h6b = document.createElement("h6");
         let btnDiv = document.createElement("div");
         let btnMore = document.createElement("button");
+
         let btnList = document.createElement("button");
         let iEye = document.createElement("i");
         let iMark = document.createElement("i");
 
         // Set classes
         col.className = "col";
-        card.className = "card";
+        card.className = "card h-100";
         img.className = "card-img-top";
         cardBody.className = "card-body";
         h5.className = "card-title";
@@ -198,15 +223,16 @@ function renderEpisodeCards(episodes = {}, targetId = "") {
         h6b.className = "card-subtitle mb-2 text-muted text-small";
         btnDiv.className = "clearfix pt-2";
         btnMore.className = "btn btn-sm btn-secondary float-start";
-        btnList.className = "btn btn-sm btn-warning float-end";
+        btnList.className = (listed) ? "btn btn-sm btn-primary float-end" : "btn btn-sm btn-warning float-end";
         iEye.className = "bi-eye";
-        iMark.className = "bi-bookmark-plus";
+        iMark.className = (listed) ? "bi-bookmark" : "bi-bookmark-plus";
 
         // Set other attributes
         card.style.width = "15rem";
         img.src = show.image.medium;
         img.alt = `${show.name} Poster`;
         btnMore.type = "button";
+        btnMore.dataset.episodeId = episode.id;
         btnList.type = "button";
 
         // Set text content
@@ -214,12 +240,11 @@ function renderEpisodeCards(episodes = {}, targetId = "") {
         h6a.textContent = `${episode.name} (${season}${number})`;
         h6b.textContent = show.webChannel.name;
         btnMore.textContent = " More...";
-        btnList.textContent = " Watchlist";
+        btnList.textContent = (listed) ? " Watching" : " Watchlist";
 
         // Attach event listeners
-        card.addEventListener("click", (e) => console.log);
-        btnMore.addEventListener("click", (e) => console.log);
-        btnList.addEventListener("click", (e) => console.log);
+        card.addEventListener("click", (e) => passToRenderEpisodeDetails(e, episode.id));
+        btnList.addEventListener("click", (e) => toggleWatchlistItem(e, JSON.parse(JSON.stringify(show))));
 
         // Prepend/Append most-nested to least-nested elements
         btnMore.prepend(iEye);
@@ -242,13 +267,12 @@ function renderEpisodeCards(episodes = {}, targetId = "") {
 }
 
 
-function renderEpisodesTable(episodes = {}) {
+function renderEpisodesTable(episodes = {}, targetId) {
     const table = episodeTable();
     const tbody = episodeTableBody(episodes);
 
-    table.append(tbody);
-
-    return table;
+    document.getElementById(targetId).append(table);
+    document.querySelector(`#${targetId} table`).append(tbody);
 }
 
 /**
@@ -286,23 +310,23 @@ function episodeTable() {
  * @returns {HTMLNode} <tbody> with completed rows
  */
 function episodeTableBody(episodes = {}) {
-    console.log('episodes: ', episodes);
-    
     const docFrag = document.createDocumentFragment();
     const tbody = document.createElement("tbody");
     const rows = [];
 
     episodes.forEach(episode => {
         let row = document.createElement("tr");
-        let epData = [episode.number, episode.season, episode.name];
+        let epData = [`S:${episode.season} E:${episode.number}`, episode.airdate, episode.name];
+        let tds = [];
         
         epData.forEach(field => {
-            let tds = [];
             let td = document.createElement("td");
             td.textContent = field;
+            tds.push(td);
         })
         
-        row.addEventListener("click", (e) => console.log(e, 'FINISH MY HANDLER!!!'));
+        row.append(...tds);
+        row.addEventListener("click", (e) => passToRenderEpisodeDetails(e, episode.id));
         rows.push(row);
     })
 
@@ -312,8 +336,47 @@ function episodeTableBody(episodes = {}) {
     return docFrag;
 }
 
-function renderEpisode(episode = {}) {
+function renderEpisodeDetails(episode = {}) {
+    const targetId = "episode-details-table";
+    const img = document.getElementById("episode-details-image");
+    const show = episode._embedded.show;
+    let network = "";
 
+    if (episode.image) {
+        img.src = episode.image.medium;
+    } else if (show.image) {
+        img.src = show.image.medium;
+    } else {
+        img.src = "./assets/not_found.jpg";
+    }
+
+    img.alt = `${show.name} Poster`;
+    document.getElementById("episode-details-title").textContent = episode.name;
+
+    if (show.network) {
+        network = show.network.name;
+    } else if (show.webChannel) {
+        network = show.webChannel.name;
+    } else {
+        network = "Multiple Providers";
+    }
+
+    document.getElementById("episode-details-se-number").textContent = `S:${episode.season} E:${episode.number}`;
+    document.getElementById("episode-details-network").textContent = network;
+    
+    // NOTE: Dakota mentioned he considered this a safe & valid use of .innerHTML during lecture
+    document.getElementById("episode-details-summary").innerHTML = episode.summary;
+    
+    // Attach event listeners
+    document.getElementById("episode-details-addwatchlist").addEventListener("click", (e) => toggleWatchlistItem(e, show.id));
+
+    // Clear table from previous episode if needed
+    if (document.getElementById(targetId).childElementCount > 0) {
+        document.getElementById(targetId).innerHTML = "";
+    }
+    
+    // Build episodes table
+    getJSON(episodeList(show.id), renderEpisodesTable, targetId);
 }
 
 /**
@@ -412,6 +475,11 @@ function getNoResultsMessage() {
     return docFrag;
 }
 
+// TODO: Finish logic
+function renderUpdateSuccess(response) {
+    console.log('response: ', response);
+}
+
 /**
  * 
  * @returns {string} Current value of theme setting from localStorage, or "automatic" as default
@@ -431,6 +499,10 @@ function setTheme(theme) {
     }
     document.body.setAttribute("data-bs-theme", theme);
 }
+
+function watchlistBtnStates(e, show, action) {
+
+}
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -439,6 +511,31 @@ function setTheme(theme) {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+//  WATCHLIST FUNCTIONALITY
+///////////////////////////////////////////////////////////////////////////////
+
+function addToWatchList(e, showId) {
+    const url = "db.json/Watchlist";
+
+
+}
+
+function removeFromWatchList(show = {}) {
+    const idIndex = global_showIds.indexOf(show.id);
+    const showIndex = global_watchlist.findIndex((wlShow) => wlShow.id === show.id);
+    global_showIds.splice(idIndex, 1);
+    showIndex.splice(showIndex, 1);
+}
+
+function getWatchlist() {
+    getJSON("http://localhost:3000/Watchlist", setGlobalWatchlist);
+}
+
+function setGlobalWatchlist(watchlist) {
+    global_watchlist = JSON.parse(JSON.stringify(watchlist));
+    global_showIds = global_watchlist.map(show => show.id);
+}
 ///////////////////////////////////////////////////////////////////////////////
 //  EVENT HANDLERS
 ///////////////////////////////////////////////////////////////////////////////
@@ -449,7 +546,6 @@ function setTheme(theme) {
  * @param {string} hash Optional. When passed, it acts as the key to internal
  *                      router object for routing proper rendering function.
  * NOTE: Hash is the string following the # character near the end of the URL
- * TODO: Remove this todo. It was used for testing.
  */
 function hashchangeRouter(hash) {
     hash = (hash) ? hash : getHash();
@@ -457,8 +553,10 @@ function hashchangeRouter(hash) {
         "Search": renderSearchUI,
         "Home": renderHomeUI,
         "Watchlist": renderWatchlistUI,
-        "Collections": renderCollectionsUI,
-        "Settings": renederSettingsUI
+        // "Collections": renderCollectionsUI,// FIXME: Save for later version
+        "Settings": renderSettingsUI,
+        "Show-Details": renderShowDetailsUI,
+        "Episode-Details": renderEpisodeDetailsUI
     };
     
     router[hash]();
@@ -491,6 +589,7 @@ function searchFormHandler(e) {
     const query = document.getElementById("search-form-input").value;
     const targetElement = document.getElementById(targetId);
 
+    // Remove previous results
     if (targetElement.hasChildNodes) {
         targetElement.innerHTML = "";
     }
@@ -499,6 +598,36 @@ function searchFormHandler(e) {
     getJSON(showSearch(query), renderShowCards, targetId);
 }
 
+function passToRenderShowDetails(e, showId) {
+    // Filter Watchlist button
+    if (e.target.className.indexOf("btn-warning") < 0) {
+        e.stopPropagation();
+        setHash("Show-Details");
+        getJSON(showLookup(showId), renderShowDetails);
+    }
+}
+
+function passToRenderEpisodeDetails(e, episodeId) {
+    // Filter out Watchlist button
+    if (e.target.className.indexOf("btn-warning") < 0) {
+        e.stopPropagation();
+        setHash("Episode-Details");
+        getJSON(episodeMainInformation(episodeId), renderEpisodeDetails);
+    }
+}
+
+function toggleWatchlistItem(e, show) {
+    
+    if (global_showIds.indexOf(show.id) > -1) {
+        // removeFromWatchlist(show);
+        deleteJSON(`http://localhost:3000/Watchlist/${show.id}`, console.log); // TODO: Confirm delete. Alter button. Send e data?
+    } else {
+        global_watchlist.push(show);
+        global_showIds.push(show.id);
+        postJSON(`http://localhost:3000/Watchlist`, show, console.log); // TODO: Confirm add. Alter button. Send e data?
+        // addToWatchList(showId);
+    }
+}
 ///////////////////////////////////////////////////////////////////////////////
 //  EVENT LISTENER ATTACHMENTS
 ///////////////////////////////////////////////////////////////////////////////
@@ -534,7 +663,6 @@ function showingSoon() {
     return "https://api.tvmaze.com/schedule/web?country=US";
 }
 
-
 /**
  * 
  * @param {number} showId Number value contained in a show's id field.
@@ -551,6 +679,15 @@ function showLookup(showId = 0) {
  */
 function episodeList(showId = 0) {
     return `https://api.tvmaze.com/shows/${showId}/episodes`;
+}
+
+/**
+ * 
+ * @param {number} episodeId Number value contained in a show's id field.
+ * @returns {string} Formatted URL for getJSON call to TVMaze API.
+ */
+function episodeMainInformation(episodeId = 0) {
+    return `https://api.tvmaze.com/episodes/${episodeId}?embed=show`;
 }
 
 /**
@@ -699,7 +836,7 @@ function postJSON(url = "", data = {}, callback) {
             throw "Failed to POST record";
         }
     })
-    .then(data => callback(data))
+    .then(data => callback(data, arguments[3]))
     .catch((error) => console.log('Error: ', error));
 }
 
@@ -719,7 +856,7 @@ function deleteJSON(url = "", callback) {
             throw "Failed to DELETE record";
         }
     })
-    .then(data => callback(data))
+    .then(data => callback(data, arguments[2]))
     .catch((error) => console.log('Error: ', error));
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -742,12 +879,13 @@ function getSystemColorScheme() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function init() {
-    const hash = getLandingPage();
+    getWatchlist();
     attachListeners();
-    setLandingPage(hash);
-    hashchangeRouter(hash);
-    setHash(hash)
     setTheme(getTheme());
+    const hash = getLandingPage();
+    setLandingPage(hash);
+    setHash(hash);
+    hashchangeRouter(hash);
 }
 
 init();
